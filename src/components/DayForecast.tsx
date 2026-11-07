@@ -41,8 +41,9 @@ export function DayForecast({ day, today }: { day: DailyForecast; today: string 
             <span className="mt-1 text-xs text-sky-700 tabular-nums dark:text-sky-300" title="降水確率">
               ☔ {h.pop}%
             </span>
-            <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400" title="湿度">
-              💧 {h.humidity}%
+            <span className="text-xs text-slate-500 tabular-nums dark:text-slate-400">
+              <span className="mr-0.5 text-[10px]">湿度</span>
+              {h.humidity}%
             </span>
           </li>
         ))}
