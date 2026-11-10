@@ -7,9 +7,9 @@ import type { HourlyForecast } from "@/lib/types";
 // 上下 2 段のグラフに分け、時間軸とホバーを共有する。
 
 const PAD = { left: 36, right: 12 };
-const TEMP_H = 150;
+const TEMP_H = 162;
 const POP_H = 96;
-const TOP = 18; // 最高気温ラベル用の余白
+const TOP = 30; // 「現在」ラベルと最高気温ラベル用の余白
 const BOTTOM = 6;
 const AXIS_H = 20; // 時刻ラベル
 
@@ -17,6 +17,16 @@ function niceStep(range: number) {
   const raw = range / 3;
   for (const s of [1, 2, 5, 10, 20]) if (raw <= s) return s;
   return 20;
+}
+
+/** 現在時刻（1分ごとに更新） */
+function useNow() {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
 }
 
 function useWidth<T extends HTMLElement>() {
@@ -35,11 +45,40 @@ function useWidth<T extends HTMLElement>() {
 export function HourlyChart({ hours }: { hours: HourlyForecast[] }) {
   const [wrapRef, width] = useWidth<HTMLDivElement>();
   const [active, setActive] = useState<number | null>(null);
+  const now = useNow();
 
   const n = hours.length;
   const plotW = Math.max(0, width - PAD.left - PAD.right);
-  const band = n > 0 ? plotW / n : 0;
-  const cx = (i: number) => PAD.left + band * (i + 0.5);
+
+  // ---- 時間軸 ----
+  // 各点は 3 時間枠の中央。予報の最初の点は「次の 3 時間枠」なので、今日のグラフでは
+  // 現在時刻が最初の点より前にあることが多い。そのときは軸を現在時刻まで左に広げる。
+  const SLOT = 3 * 3600;
+  const nowSec = now / 1000;
+  const first = n > 0 ? hours[0].dt : 0;
+  const last = n > 0 ? hours[n - 1].dt : 0;
+  const showNow = n > 0 && nowSec >= first - SLOT - 60 && nowSec <= last + SLOT / 2;
+  // 現在線が縦軸に重ならないよう、左に 30 分ぶんの余白を取る
+  const tStart = showNow ? Math.min(first - SLOT / 2, nowSec - 1800) : first - SLOT / 2;
+  const tEnd = last + SLOT / 2;
+  const xAt = (t: number) => PAD.left + ((t - tStart) / (tEnd - tStart)) * plotW;
+  const band = n > 0 ? (plotW * SLOT) / (tEnd - tStart) : 0;
+  const cx = (i: number) => xAt(hours[i].dt);
+
+  const nowX = showNow && plotW > 0 ? xAt(nowSec) : null;
+  // 現地時刻の「HH:mm」（API の time と dt の差からタイムゾーンを求める）
+  let nowLabel = "";
+  if (nowX !== null) {
+    const [hh, mm] = hours[0].time.split(":").map(Number);
+    const utcMin = Math.floor(hours[0].dt / 60) % 1440;
+    const offsetMin = (((hh * 60 + mm - utcMin) % 1440) + 1440) % 1440;
+    const local = (Math.floor(nowSec / 60) + offsetMin) % 1440;
+    nowLabel = `${String(Math.floor(local / 60)).padStart(2, "0")}:${String(local % 60).padStart(2, "0")}`;
+  }
+  const nowLine = (y1: number, y2: number) =>
+    nowX !== null && (
+      <line x1={nowX} x2={nowX} y1={y1} y2={y2} className="stroke-[var(--chart-now)]" strokeWidth={1.5} />
+    );
 
   // ---- 気温スケール ----
   const temps = hours.map((h) => h.temp);
@@ -76,7 +115,7 @@ export function HourlyChart({ hours }: { hours: HourlyForecast[] }) {
     hours.map((_, i) => (
       <rect
         key={i}
-        x={PAD.left + band * i}
+        x={cx(i) - band / 2}
         y={0}
         width={band}
         height={h}
@@ -126,6 +165,18 @@ export function HourlyChart({ hours }: { hours: HourlyForecast[] }) {
               </g>
             ))}
             {crosshair(TEMP_H)}
+            {nowLine(TOP - 12, TEMP_H)}
+            {nowX !== null && (
+              <text
+                x={nowX + (nowX > width - 90 ? -6 : 6)}
+                y={12}
+                textAnchor={nowX > width - 90 ? "end" : "start"}
+                className="fill-slate-700 text-[11px] font-semibold tabular-nums dark:fill-slate-200"
+              >
+                現在 {nowLabel}
+              </text>
+            )}
+            {nowX !== null && <circle cx={nowX} cy={TOP - 12} r={3} className="fill-[var(--chart-now)]" />}
             {areaPath && <path d={areaPath} className="fill-[var(--chart-temp)]" fillOpacity={0.1} />}
             {n > 1 && (
               <path d={linePath} fill="none" className="stroke-[var(--chart-temp)]" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
@@ -164,6 +215,7 @@ export function HourlyChart({ hours }: { hours: HourlyForecast[] }) {
               </g>
             ))}
             {crosshair(POP_H)}
+            {nowLine(0, POP_H)}
             {hours.map((h, i) => {
               const top = py(h.pop);
               const hgt = py(0) - top;

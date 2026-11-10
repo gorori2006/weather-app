@@ -10,6 +10,7 @@
   --chart-grid: #e2e8f0;
   --chart-axis: #94a3b8;
   --chart-surface: #ffffff;
+  --chart-now: #334155;
 }
 
 @theme inline {
@@ -29,6 +30,7 @@
     --chart-grid: #334155;
     --chart-axis: #64748b;
     --chart-surface: #1f2937;
+    --chart-now: #cbd5e1;
   }
 }
 
