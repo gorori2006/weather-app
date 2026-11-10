@@ -5,6 +5,7 @@ import { SearchBar } from "@/components/SearchBar";
 import { CurrentWeather } from "@/components/CurrentWeather";
 import { DatePicker } from "@/components/DatePicker";
 import { DayForecast } from "@/components/DayForecast";
+import { WeatherSkeleton } from "@/components/WeatherSkeleton";
 import type { ErrorResponse, WeatherResponse } from "@/lib/types";
 
 /** 指定タイムゾーンオフセットでの今日の日付 "YYYY-MM-DD" */
@@ -62,15 +63,26 @@ export default function Home() {
         </div>
       )}
 
-      {loading && (
-        <div className="flex items-center justify-center gap-3 py-10 text-slate-500" aria-live="polite">
-          <span className="h-6 w-6 animate-spin rounded-full border-4 border-sky-300 border-t-sky-600" />
-          読み込み中…
+      {/* 読み込み状態をスクリーンリーダーに伝える */}
+      <p className="sr-only" aria-live="polite">
+        {loading ? "天気情報を読み込み中です" : ""}
+      </p>
+
+      {/* 初回の読み込み中は、カードと同じ形のスケルトンを表示 */}
+      {loading && !data && <WeatherSkeleton />}
+
+      {/* 再検索中は前の表示を薄くして残す（レイアウトが跳ねない） */}
+      {data && loading && (
+        <div className="fixed top-4 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-lg dark:bg-slate-800 dark:text-slate-200">
+          <span className="h-3.5 w-3.5 rounded-full border-2 border-sky-300 border-t-sky-600 motion-safe:animate-spin" />
+          更新中…
         </div>
       )}
-
-      {!loading && data && (
-        <>
+      {data && (
+        <div
+          className={`flex flex-col gap-5 transition-opacity duration-200 ${loading ? "pointer-events-none opacity-50" : ""}`}
+          aria-busy={loading}
+        >
           <CurrentWeather
             location={data.location}
             current={data.current}
@@ -93,7 +105,7 @@ export default function Home() {
               />
             )}
           </div>
-        </>
+        </div>
       )}
 
       {!loading && !data && !error && (
