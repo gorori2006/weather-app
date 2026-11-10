@@ -1,6 +1,8 @@
 import type { DailyForecast } from "@/lib/types";
 import { WeatherIcon } from "./WeatherIcon";
 import { HourlyChart } from "./HourlyChart";
+import { DayAdvice } from "./DayAdvice";
+import { buildAdvice } from "@/lib/advice";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -11,7 +13,18 @@ function formatDate(date: string, today: string) {
   return `${m}月${d}日（${w}）${label && ` · ${label}`}`;
 }
 
-export function DayForecast({ day, today }: { day: DailyForecast; today: string }) {
+type Props = {
+  day: DailyForecast;
+  today: string;
+  /** 比較用の前日・翌日の予報 */
+  prev?: DailyForecast;
+  next?: DailyForecast;
+};
+
+export function DayForecast({ day, today, prev, next }: Props) {
+  const isToday = day.date === today;
+  const [, m, d] = day.date.split("-").map(Number);
+  const advice = buildAdvice(day, { prev, next, isToday });
   return (
     <section className="card">
       <div className="flex items-center justify-between gap-4">
@@ -21,6 +34,8 @@ export function DayForecast({ day, today }: { day: DailyForecast; today: string 
         </div>
         <WeatherIcon icon={day.icon} alt={day.description} />
       </div>
+
+      <DayAdvice title={isToday ? "今日のひとこと" : `${m}/${d} のひとこと`} items={advice} />
 
       <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <Summary label="最高気温" value={`${day.tempMax}°C`} className="text-rose-600 dark:text-rose-400" />

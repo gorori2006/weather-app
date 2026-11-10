@@ -84,7 +84,14 @@ export default function Home() {
               today={today}
               onSelect={setSelected}
             />
-            {selectedDay && <DayForecast day={selectedDay} today={today} />}
+            {selectedDay && (
+              <DayForecast
+                day={selectedDay}
+                today={today}
+                prev={data.days[data.days.indexOf(selectedDay) - 1]}
+                next={data.days[data.days.indexOf(selectedDay) + 1]}
+              />
+            )}
           </div>
         </>
       )}
