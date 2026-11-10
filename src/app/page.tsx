@@ -91,7 +91,7 @@ export default function Home() {
           <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
             <DatePicker
               key={`${data.location.lat},${data.location.lon}`}
-              availableDates={data.days.map((d) => d.date)}
+              days={data.days}
               selected={selected}
               today={today}
               onSelect={setSelected}

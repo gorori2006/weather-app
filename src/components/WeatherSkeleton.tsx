@@ -41,7 +41,7 @@ export function WeatherSkeleton() {
           <Bar className="mx-auto mb-4 h-5 w-28" />
           <div className="grid grid-cols-7 gap-1">
             {Array.from({ length: 35 }, (_, i) => (
-              <div key={i} className="aspect-square rounded-lg bg-slate-100 dark:bg-slate-700/60" />
+              <div key={i} className="h-12 rounded-lg bg-slate-100 dark:bg-slate-700/60" />
             ))}
           </div>
         </section>
