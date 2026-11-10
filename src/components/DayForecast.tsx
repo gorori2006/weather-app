@@ -1,5 +1,6 @@
 import type { DailyForecast } from "@/lib/types";
 import { WeatherIcon } from "./WeatherIcon";
+import { HourlyChart } from "./HourlyChart";
 
 const WEEKDAYS = ["日", "月", "火", "水", "木", "金", "土"];
 
@@ -27,6 +28,8 @@ export function DayForecast({ day, today }: { day: DailyForecast; today: string 
         <Summary label="降水確率(最大)" value={`${day.pop}%`} />
         <Summary label="平均湿度" value={`${day.humidity}%`} />
       </dl>
+
+      <HourlyChart hours={day.hours} />
 
       <h3 className="mt-5 mb-2 text-sm font-semibold text-slate-500 dark:text-slate-400">3時間ごとの予報</h3>
       <ul className="-mx-1 flex snap-x gap-2 overflow-x-auto px-1 pb-2">

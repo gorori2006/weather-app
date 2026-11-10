@@ -76,7 +76,7 @@ export default function Home() {
             current={data.current}
             todayPop={data.days[0]?.hours[0]?.pop}
           />
-          <div className="grid gap-5 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-[minmax(0,320px)_minmax(0,1fr)]">
             <DatePicker
               key={`${data.location.lat},${data.location.lon}`}
               availableDates={data.days.map((d) => d.date)}
